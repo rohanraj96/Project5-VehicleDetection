@@ -2,10 +2,12 @@ from moviepy.editor import VideoFileClip
 from IPython.display import HTML
 import numpy as np
 import cv2
+import glob
 from scipy.ndimage.measurements import label
 from sliding_window import *
 from features import extract_features
 import pickle
+import matplotlib.pyplot as plt
 
 class find_cars():
 
@@ -16,13 +18,16 @@ class find_cars():
         self.spatial_size = (32, 32)
         self.hist_bins = 32
         self.hist_range = (0, 256)
-        self.hog_channel = 0
+        self.hog_channel = 'ALL'
         self.pix = 8
         self.cell = 2
         self.path = False
         self.classifier = pickle.load(open('models/linearsvc_ycrcb_all.p', "rb"))
         self.X_scaler = pickle.load(open('models/x_scaler_ycrcb_all.p', "rb"))
         self.last_frames = []
+        self.history = []
+        self.detections = 0
+        self.frames = 0
 
 
     def add_heat(self, heatmap, bboxes):
@@ -40,14 +45,20 @@ class find_cars():
 
 
     def buffer(self, this_frame, detection_number):
+
+        if self.frames == 22:
+            self.frames = 0
+            self.last_frames = []
+            self.history = []
+
       
-        # if len(self.last_frames) >= detection_number: #Check if we have any previous frames of this label
-        #     self.last_frames[detection_number - 1].append(this_frame)
+        if len(self.last_frames) >= detection_number: #Check if we have any previous frames of this label
+            self.last_frames[detection_number - 1].append(this_frame)
+            self.history[detection_number - 1] = self.last_frames[detection_number - 1][-1]
 
-        # else:
-        #     self.last_frames.append([this_frame])
-
-        self.last_frames.append(this_frame)
+        else:
+            self.last_frames.append([this_frame])
+            self.history.append([this_frame])
 
 
     def draw_labeled_bboxes(self, img, labels):
@@ -58,10 +69,30 @@ class find_cars():
             nonzerox = np.array(nonzero[1])
             bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
             self.buffer(bbox, detection_number)
-            smoothed = np.array(self.last_frames).mean(axis = 0)
+            smoothed = np.array(self.last_frames[detection_number - 1]).mean(axis = 0)
             left = tuple(map(int, tuple(smoothed[0])))
             right = tuple(map(int, tuple(smoothed[1])))
+            # print("Car Number: ", detection_number)
+            # print("Left: ", left)
+            # print("Right: ", right)
+            # print("\n\n")
             cv2.rectangle(img, left, right, (255,0,255), 6)
+
+        if labels[1] < self.detections:
+
+            # print("We are in the dicey loop")
+            for detection_number in range(labels[1], self.detections):
+                # print("Car Number: ", detection_number)
+                if(len(self.history[detection_number - 1]) > 1):
+                    # print("history: ", self.history[detection_number - 1])
+                    left, right = self.history[detection_number - 1]
+                else:
+                    # print("history: ", self.history[detection_number - 1])                    
+                    left, right = self.history[detection_number - 1][0]
+                # print("Left: ", left)
+                # print("Right: ", right)
+                # print("\n\n")
+                cv2.rectangle(img, left, right, (255,0,255), 6)
 
         return img
 
@@ -73,8 +104,8 @@ class find_cars():
 
         x_start_stop = [576, 1280]
         y_start_stop = [400, 640]
-        xy_window = [(64, 64), (96, 96), (128, 128)]
-        xy_overlap = (0.25, 0.25)
+        xy_window = [(96, 96), (128, 128), (160, 160)]
+        xy_overlap = (0.5, 0.5)
 
         total_windows = []
         total_detections = []
@@ -97,7 +128,10 @@ class find_cars():
     
         thresholded_heatmap = self.threshold(heatmap, 2)
         labels = label(thresholded_heatmap)
+        if labels[1] > self.detections:
+            self.detections = labels[1]
     
         draw_img = self.draw_labeled_bboxes(np.copy(frame), labels)
-    
+        self.frames += 1
+
         return draw_img
