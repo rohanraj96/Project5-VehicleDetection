@@ -37,13 +37,13 @@ def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
 
 def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
 
-    imcopy = np.copy(img)
+    # imcopy = np.copy(img)
     # bboxes = np.array(bboxes, dtype = np.uint8)
     for bbox in bboxes:
         # print (bbox)
-        cv2.rectangle(imcopy, bbox[0], bbox[1], color, thick)
+        cv2.rectangle(img, bbox[0], bbox[1], color, thick)
 
-    return imcopy
+    return img
 
 def search_windows(image, windows, clf, scaler, color_space='RGB', 
                     spatial_size=(32, 32), hist_bins=32, 
@@ -67,9 +67,11 @@ def search_windows(image, windows, clf, scaler, color_space='RGB',
                                     spatial_size=spatial_size, hist_bins=hist_bins,
                                     hist_range=hist_range, pix=pix_per_cell, 
                                     cell=cell_per_block, hog_channel=hog_channel, path=False)
+            # print(np.array(features))
             test_features = scaler.transform(np.array(features).reshape(1, -1))
             prediction = clf.predict(test_features)
             if (prediction == 1):# & (count == 0):
+                # print(window)
                 on_windows.append(window)
 
         #         elif (prediction == 1) & (count == 1):
@@ -117,5 +119,6 @@ def search_windows(image, windows, clf, scaler, color_space='RGB',
         # # print('\n\n\n\n\n')
         # count += 1
             
+    # print(on_windows)
     return on_windows
 

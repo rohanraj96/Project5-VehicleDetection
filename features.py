@@ -74,7 +74,7 @@ def extract_features(imgs, cspace='BGR', orient = 9, spatial_size=(32, 32), hist
 
         spatial_features = bin_spatial(feature_image, size=spatial_size)
         hist_features = color_hist(feature_image, nbins=hist_bins, bins_range=hist_range)
-        features.append(np.concatenate((spatial_features, hist_features, hog_features)))
+        features.append(np.concatenate((hog_features, spatial_features, hist_features)))
     
         return features
 
@@ -106,6 +106,6 @@ def extract_features(imgs, cspace='BGR', orient = 9, spatial_size=(32, 32), hist
                 hog_features = get_hog_features(feature_image[:,:,hog_channel], orient, pix_per_cell=pix, cell_per_block=cell, vis=False, feature_vec=True)
             spatial_features = bin_spatial(feature_image, size=spatial_size)
             hist_features = color_hist(feature_image, nbins=hist_bins, bins_range=hist_range)
-            features.append(np.concatenate((spatial_features, hist_features, hog_features)))
+            features.append(np.concatenate((hog_features, spatial_features, hist_features)))
 
         return features
