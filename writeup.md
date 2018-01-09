@@ -143,5 +143,4 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 One major flaw with my pipeline is discarding half of the frame to remove false positives even though there is a possibility of a car right in front of us. This can be definitely improved by training a better classifier using hard negative mining or using a better classifier.
 My detections are also very shaky, which can be improved by averaging previous frames to give a smooth output.
-Another drawback is that the classifier is too slow to work in real-time as shown in train.ipynb. This is because I am not sub-sampling from the entire image after extracting the features once. I didn't do this because it made the pipeline perform worse however improving the speed during test time is definitely an area of improvement.
-
+Another drawback is that the classifier is too slow to work in real-time as shown in train.ipynb.
